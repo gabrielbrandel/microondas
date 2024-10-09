@@ -14,7 +14,6 @@ import {
 } from '@coreui/react';
 
 export const TelaMicroondas = () => {
-    const [validated, setValidated] = useState(false);
     const [getInput, setInput] = useState('00:00');
     const [getPw, setPw] = useState(10);
     const [isRunning, setIsRunning] = useState(false);
@@ -25,15 +24,6 @@ export const TelaMicroondas = () => {
     const updateOutputString = (totalSeconds, power) => {
         const pointsPerSecond = '.'.repeat(power); 
         setOutputString((prev) => prev + pointsPerSecond + ' '); 
-    };
-
-    const handleSubmit = (event) => {
-        const form = event.currentTarget;
-        if (form.checkValidity() === false) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        setValidated(true);
     };
 
     const convertSecondsToTime = (totalSeconds) => {
