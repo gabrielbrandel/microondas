@@ -18,13 +18,13 @@ export const TelaMicroondas = () => {
     const [getInput, setInput] = useState('00:00');
     const [getPw, setPw] = useState(10);
     const [isRunning, setIsRunning] = useState(false);
-    const [isPaused, setIsPaused] = useState(false); // Estado para controlar pausa
+    const [isPaused, setIsPaused] = useState(false); 
     const intervalRef = useRef(null);
-    const [outputString, setOutputString] = useState(''); // String de saída
+    const [outputString, setOutputString] = useState(''); 
 
     const updateOutputString = (totalSeconds, power) => {
-        const pointsPerSecond = '.'.repeat(power); // Gera os pontos baseados na potência
-        setOutputString((prev) => prev + pointsPerSecond + ' '); // Adiciona os pontos a cada segundo
+        const pointsPerSecond = '.'.repeat(power); 
+        setOutputString((prev) => prev + pointsPerSecond + ' '); 
     };
 
     const handleSubmit = (event) => {
@@ -47,7 +47,7 @@ export const TelaMicroondas = () => {
         let totalSeconds = minutes * 60 + seconds;
 
         if (isPaused) {
-            // Se o temporizador está pausado, retoma a contagem
+            
             setIsRunning(true);
             setIsPaused(false);
             intervalRef.current = setInterval(() => {
@@ -62,7 +62,7 @@ export const TelaMicroondas = () => {
                 }
             }, 1000);
         } else if (!isRunning) {
-            // Se o temporizador não está rodando e nem pausado, inicia o temporizador
+            
             setIsRunning(true);
             setOutputString('');
             intervalRef.current = setInterval(() => {
@@ -77,7 +77,7 @@ export const TelaMicroondas = () => {
                 }
             }, 1000);
         } else if (isRunning) {
-            // Se o temporizador já está rodando, adiciona 30 segundos
+            
             totalSeconds += 30;
             setInput(convertSecondsToTime(totalSeconds));
         }
@@ -172,7 +172,7 @@ export const TelaMicroondas = () => {
                         color="secondary"
                         variant="ghost"
                         id="inputGroupFileAddon03"
-                        onClick={onClick || (() => handleClick(input))} // Aplica onClick se passado, senão usa handleClick
+                        onClick={onClick || (() => handleClick(input))} 
                         style={{
                             height: '50px',
                             width: '65px',
@@ -237,7 +237,7 @@ export const TelaMicroondas = () => {
                                             variant="ghost"
                                             id="inputGroupFileAddon03"
                                             size="sm"
-                                            onClick={handleIncreasePw} // Chama handleIncreasePw
+                                            onClick={handleIncreasePw} 
                                             style={{
                                                 height: '40px',
                                                 width: '40px',
@@ -253,8 +253,8 @@ export const TelaMicroondas = () => {
                                         <CFormInput
                                             type="text"
                                             id="validationCustom01"
-                                            value={getPw} // O valor de getPw será mostrado aqui
-                                            readOnly // Campo somente leitura
+                                            value={getPw} 
+                                            readOnly 
                                             required
                                         />
                                         <CButton
@@ -263,7 +263,7 @@ export const TelaMicroondas = () => {
                                             variant="ghost"
                                             id="inputGroupFileAddon03"
                                             size="sm"
-                                            onClick={handleDecreasePw} // Chama handleDecreasePw
+                                            onClick={handleDecreasePw} 
                                             style={{
                                                 height: '40px',
                                                 width: '40px',
