@@ -13,17 +13,26 @@ import {
     CImage,
 } from '@coreui/react';
 
+import useFetchProgramados from '../components/api/methods/GetProgramados';
+
 export const TelaMicroondas = () => {
+    const intervalRef = useRef(null);
     const [getInput, setInput] = useState('00:00');
     const [getPw, setPw] = useState(10);
     const [isRunning, setIsRunning] = useState(false);
     const [isPaused, setIsPaused] = useState(false); 
-    const intervalRef = useRef(null);
     const [outputString, setOutputString] = useState(''); 
+    const { fetchProgramados, loading, error } = useFetchProgramados();
+    const [string, setString] = useState('.'); 
 
-    const updateOutputString = (totalSeconds, power) => {
-        const pointsPerSecond = '.'.repeat(power); 
-        setOutputString((prev) => prev + pointsPerSecond + ' '); 
+    const handleFetchProgramados = async (id, string) => {
+        
+        const response = await fetchProgramados(id);
+
+        setString(string);        
+        setPw(response.potencia);        
+        setInput(convertToTimeFormat(response.tempo));
+        console.log('Dados recebidos:', response.potencia);  
     };
 
     const convertSecondsToTime = (totalSeconds) => {
@@ -32,9 +41,22 @@ export const TelaMicroondas = () => {
         return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     };
 
+    const convertToTimeFormat = (timeString) => {
+        const minutes = timeString.match(/\d+/)[0];
+        const formattedMinutes = minutes.padStart(2, '0');
+
+        return `${formattedMinutes}:00`;
+    };
+
+    const updateOutputString = (totalSeconds, power) => {
+        const pointsPerSecond = `${string}`.repeat(power);
+        setOutputString((prev) => prev + pointsPerSecond + ' ');
+    };
+
     const handleInitial = () => {
         let [minutes, seconds] = getInput.split(':').map(Number);
         let totalSeconds = minutes * 60 + seconds;
+       
 
         if (isPaused) {
             
@@ -73,20 +95,21 @@ export const TelaMicroondas = () => {
         }
     };
 
-
     const handleCancel = () => {
         if (isRunning) {
 
             clearInterval(intervalRef.current);
             setIsRunning(false);
-            setIsPaused(true);
+            setIsPaused(true);            
         } else if (isPaused) {
-
             setIsPaused(false);
-            setInput('00:00');
-        } else if (!isRunning && !isPaused) {
+            setString('.');
             setInput('00:00');
             setOutputString('');
+        } else if (!isRunning && !isPaused) {
+            setString('.');
+            setOutputString('');
+            setInput('00:00');
         }
     };
 
@@ -274,35 +297,35 @@ export const TelaMicroondas = () => {
                                 <ButtonGroups input={'1'} fonteSize="20px" />
                                 <ButtonGroups input={'2'} fonteSize="20px" />
                                 <ButtonGroups input={'3'} fonteSize="20px" />
-                                <ButtonGroups input={'Pipoca'} fonteSize="10px" />
+                                <ButtonGroups input={'Pipoca'} fonteSize="10px" onClick={() => handleFetchProgramados(1, ',')} />
                             </CInputGroup>
 
                             <CInputGroup>
                                 <ButtonGroups input={'4'} fonteSize="20px" />
                                 <ButtonGroups input={'5'} fonteSize="20px" />
                                 <ButtonGroups input={'6'} fonteSize="20px" />
-                                <ButtonGroups input={'Leite'} fonteSize="10px" />
+                                <ButtonGroups input={'Leite'} fonteSize="10px" onClick={() => handleFetchProgramados(2, ':')} />
                             </CInputGroup>
 
                             <CInputGroup>
                                 <ButtonGroups input={'7'} fonteSize="20px" />
                                 <ButtonGroups input={'8'} fonteSize="20px" />
                                 <ButtonGroups input={'9'} fonteSize="20px" />
-                                <ButtonGroups input={'Carnes de Boi'} fonteSize="10px" />
+                                <ButtonGroups input={'Carnes de Boi'} fonteSize="10px" onClick={() => handleFetchProgramados(3, ';')} />
                             </CInputGroup>
 
                             <CInputGroup>
                                 <ButtonGroups input={'Cancela/Pausa'} fonteSize="9px" onClick={handleCancel} />
                                 <ButtonGroups input={'0'} fonteSize="20px" />
                                 <ButtonGroups input={'Iniciar/+30'} fonteSize="12px" onClick={handleInitial} />
-                                <ButtonGroups input={'Frango'} fonteSize="10px" />
+                                <ButtonGroups input={'Frango'} fonteSize="10px" onClick={() => handleFetchProgramados(4, '-')} />
                             </CInputGroup>
 
                             <CInputGroup>
                                 <ButtonGroups input={'Custom 1'} fonteSize="10px" />
                                 <ButtonGroups input={'Custom 2'} fonteSize="10px" />
                                 <ButtonGroups input={'Custom 3'} fonteSize="10px" />
-                                <ButtonGroups input={'Feijão'} fonteSize="10px" />
+                                <ButtonGroups input={'Feijão'} fonteSize="10px" onClick={() => handleFetchProgramados(5, '+')} />
                             </CInputGroup>
 
 
