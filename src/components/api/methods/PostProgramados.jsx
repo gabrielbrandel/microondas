@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import axiosInstance from '../AxiosInstance';
 
-const useGetProgramados = () => {
+const usePostProgramados = () => {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    const fetchProgramados = async (id) => {
+    
+    const PostProgramados = async (values) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.get(`programados/${id}`);
+            const response = await axiosInstance.post('programados', values);
             setRows(response.data); 
             return response.data;   
         } catch (error) {
@@ -20,7 +20,7 @@ const useGetProgramados = () => {
         }
     };
 
-    return { rows, loading, error, fetchProgramados };
+    return { rows, loading, error, PostProgramados };
 };
 
-export default useGetProgramados;
+export default usePostProgramados;

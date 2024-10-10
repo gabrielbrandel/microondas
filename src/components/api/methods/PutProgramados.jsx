@@ -1,17 +1,22 @@
 import { useState } from 'react';
 import axiosInstance from '../AxiosInstance';
 
-const useGetProgramados = () => {
+const usePutProgramados = () => {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const fetchProgramados = async (id) => {
+    const PutProgramados = async (id, values) => {
         setLoading(true);
         try {
-            const response = await axiosInstance.get(`programados/${id}`);
-            setRows(response.data); 
-            return response.data;   
+            const response = await axiosInstance.put(`programados/${id}`, values);
+            const updatedRows = rows.map(item =>
+                item.id === id ? { ...item, ...values } : item
+            );
+
+            setRows(updatedRows); 
+            return response.data; 
+
         } catch (error) {
             console.error('Erro ao comunicar com a API:', error);
             setError(error);
@@ -20,7 +25,7 @@ const useGetProgramados = () => {
         }
     };
 
-    return { rows, loading, error, fetchProgramados };
+    return { rows, loading, error, PutProgramados };
 };
 
-export default useGetProgramados;
+export default usePutProgramados;

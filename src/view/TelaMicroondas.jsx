@@ -14,25 +14,36 @@ import {
 } from '@coreui/react';
 
 import useFetchProgramados from '../components/api/methods/GetProgramados';
+import usePostProgramados from '../components/api/methods/PostProgramados';
+import usePutProgramados from '../components/api/methods/PutProgramados';
 
 export const TelaMicroondas = () => {
     const intervalRef = useRef(null);
     const [getInput, setInput] = useState('00:00');
     const [getPw, setPw] = useState(10);
     const [isRunning, setIsRunning] = useState(false);
-    const [isPaused, setIsPaused] = useState(false); 
-    const [outputString, setOutputString] = useState(''); 
+    const [isPaused, setIsPaused] = useState(false);
+    const [outputString, setOutputString] = useState('');
     const { fetchProgramados, loading, error } = useFetchProgramados();
-    const [string, setString] = useState('.'); 
+    const { postProgramados, postLoading, posError } = usePostProgramados();
+    const { putProgramados, putLoading, putError } = usePutProgramados();
+    const [string, setString] = useState('.');
+    const [ getResponse, setResponse ] = useState('');
+    const [getImage, setImage] = useState("./src/images/micro_off.jpg");
 
     const handleFetchProgramados = async (id, string) => {
-        
+
         const response = await fetchProgramados(id);
 
-        setString(string);        
-        setPw(response.potencia);        
-        setInput(convertToTimeFormat(response.tempo));
-        console.log('Dados recebidos:', response.potencia);  
+        if (response) {     
+            setResponse(JSON.stringify(response, null, 2));
+            setOutputString('');       
+            setString(string);
+            setPw(response.potencia);
+            setInput(convertToTimeFormat(response.tempo));            
+        } else {
+            alert('Programa não cadastrado.');
+        }
     };
 
     const convertSecondsToTime = (totalSeconds) => {
@@ -56,10 +67,11 @@ export const TelaMicroondas = () => {
     const handleInitial = () => {
         let [minutes, seconds] = getInput.split(':').map(Number);
         let totalSeconds = minutes * 60 + seconds;
-       
+
 
         if (isPaused) {
-            
+
+            setImage("./src/images/micro_on.jpg");
             setIsRunning(true);
             setIsPaused(false);
             intervalRef.current = setInterval(() => {
@@ -71,10 +83,12 @@ export const TelaMicroondas = () => {
                     clearInterval(intervalRef.current);
                     setIsRunning(false);
                     setOutputString((prev) => prev + 'Aquecimento concluído');
+                    setImage("./src/images/micro_off.jpg");
                 }
             }, 1000);
         } else if (!isRunning) {
-            
+
+            setImage("./src/images/micro_on.jpg");
             setIsRunning(true);
             setOutputString('');
             intervalRef.current = setInterval(() => {
@@ -86,10 +100,11 @@ export const TelaMicroondas = () => {
                     clearInterval(intervalRef.current);
                     setIsRunning(false);
                     setOutputString((prev) => prev + 'Aquecimento concluído');
+                    setImage("./src/images/micro_off.jpg");
                 }
             }, 1000);
         } else if (isRunning) {
-            
+
             totalSeconds += 30;
             setInput(convertSecondsToTime(totalSeconds));
         }
@@ -100,16 +115,23 @@ export const TelaMicroondas = () => {
 
             clearInterval(intervalRef.current);
             setIsRunning(false);
-            setIsPaused(true);            
+            setIsPaused(true);
+            setImage("./src/images/micro_off.jpg");
         } else if (isPaused) {
             setIsPaused(false);
             setString('.');
             setInput('00:00');
             setOutputString('');
+            setImage("./src/images/micro_off.jpg");
+            setResponse('');
+            
         } else if (!isRunning && !isPaused) {
             setString('.');
             setOutputString('');
             setInput('00:00');
+            setImage("./src/images/micro_off.jpg");
+            setResponse('');
+            
         }
     };
 
@@ -176,16 +198,16 @@ export const TelaMicroondas = () => {
         setInput(e.target.value);
     };
 
-    const ButtonGroups = ({ input, fonteSize, onClick }) => {
+    const ButtonGroups = ({ input, fonteSize, onClick, fonte }) => {
         return (
-            <CRow>             
+            <CRow>
                 <CCol md={1}>
                     <CButton
                         type="button"
                         color="secondary"
                         variant="ghost"
                         id="inputGroupFileAddon03"
-                        onClick={onClick || (() => handleClick(input))} 
+                        onClick={onClick || (() => handleClick(input))}
                         style={{
                             height: '50px',
                             width: '65px',
@@ -198,6 +220,7 @@ export const TelaMicroondas = () => {
                             padding: 0,
                             marginTop: '5px',
                             fontSize: fonteSize,
+                            fontStyle: fonte ? 'italic' : 'normal',
                             transition: 'transform 0.2s ease, background-color 0.3s ease',
                         }}
                         onMouseEnter={(e) => {
@@ -230,117 +253,124 @@ export const TelaMicroondas = () => {
 
                     <CCardBody>
                         <CForm>
-                            <CInputGroup>
-                                <CCol md={1}>
-                                    <CFormLabel htmlFor="validationCustom05">Visor</CFormLabel>
-                                    <CFormInput
-                                        type="string"
-                                        id="validationCustom05"
-                                        style={{ width: '90%' }}
-                                        value={getInput}
-                                        onChange={handleInputChange}
-                                    />
-                                </CCol>
-                                <CCol md={3}>
-                                    <CFormLabel htmlFor="validationCustom01">Potência</CFormLabel>
+                            <CRow>
+                                <CCol xs={12} md={6}>
                                     <CInputGroup>
-                                        <CButton
-                                            type="button"
-                                            color="secondary"
-                                            variant="ghost"
-                                            id="inputGroupFileAddon03"
-                                            size="sm"
-                                            onClick={handleIncreasePw} 
-                                            style={{
-                                                height: '40px',
-                                                width: '40px',
-                                                backgroundColor: 'green',
-                                                color: 'white',
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',                                                
-                                            }}
-                                        >
-                                            +
-                                        </CButton>
-                                        <CFormInput
-                                            type="text"
-                                            id="validationCustom01"
-                                            value={getPw} 
-                                            readOnly 
-                                            required
-                                        />
-                                        <CButton
-                                            type="button"
-                                            color="secondary"
-                                            variant="ghost"
-                                            id="inputGroupFileAddon03"
-                                            size="sm"
-                                            onClick={handleDecreasePw} 
-                                            style={{
-                                                height: '40px',
-                                                width: '40px',
-                                                backgroundColor: 'red',
-                                                color: 'white',
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            -
-                                        </CButton>
+                                        <CCol md={6}>
+                                            <CFormLabel htmlFor="validationCustom05">Visor</CFormLabel>
+                                            <CFormInput
+                                                type="string"
+                                                id="validationCustom05"
+                                                style={{ width: '90%' }}
+                                                value={getInput}
+                                                onChange={handleInputChange}
+                                            />
+                                        </CCol>
+                                        <CCol md={6}>
+                                            <CFormLabel htmlFor="validationCustom01">Potência</CFormLabel>
+                                            <CInputGroup>
+                                                <CButton
+                                                    type="button"
+                                                    color="secondary"
+                                                    variant="ghost"
+                                                    id="inputGroupFileAddon03"
+                                                    size="sm"
+                                                    onClick={handleIncreasePw}
+                                                    style={{
+                                                        height: '40px',
+                                                        width: '40px',
+                                                        backgroundColor: 'green',
+                                                        color: 'white',
+                                                        display: 'flex',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                    }}
+                                                >
+                                                    +
+                                                </CButton>
+                                                <CFormInput
+                                                    type="text"
+                                                    id="validationCustom01"
+                                                    value={getPw}
+                                                    readOnly
+                                                    required
+                                                />
+                                                <CButton
+                                                    type="button"
+                                                    color="secondary"
+                                                    variant="ghost"
+                                                    id="inputGroupFileAddon03"
+                                                    size="sm"
+                                                    onClick={handleDecreasePw}
+                                                    style={{
+                                                        height: '40px',
+                                                        width: '40px',
+                                                        backgroundColor: 'red',
+                                                        color: 'white',
+                                                        display: 'flex',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                    }}
+                                                >
+                                                    -
+                                                </CButton>
+                                            </CInputGroup>
+                                        </CCol>
+                                    </CInputGroup>
+                                    <CImage rounded thumbnail src={getImage} style={{ width: '600px', height: '270px', marginTop: '10px' }} />
+                                    <CFormLabel htmlFor="exampleFormControlTextarea1">JSON</CFormLabel>
+                                    <textarea
+                                        className="form-control"
+                                        id="exampleFormControlTextarea1"
+                                        rows="10"
+                                        value={getResponse}
+                                        readOnly
+                                    ></textarea>                                
+                                </CCol>
+                                <CCol xs={12} md={6} className="d-flex flex-column align-items-end" style={{marginTop: '80px'}}>
+                                    <CInputGroup>
+                                        <ButtonGroups input={'1'} fonteSize="20px" />
+                                        <ButtonGroups input={'2'} fonteSize="20px" />
+                                        <ButtonGroups input={'3'} fonteSize="20px" />
+                                        <ButtonGroups input={'Pipoca'} fonteSize="10px" onClick={() => handleFetchProgramados(1, ',')} />
+                                    </CInputGroup>
+
+                                    <CInputGroup>
+                                        <ButtonGroups input={'4'} fonteSize="20px" />
+                                        <ButtonGroups input={'5'} fonteSize="20px" />
+                                        <ButtonGroups input={'6'} fonteSize="20px" />
+                                        <ButtonGroups input={'Leite'} fonteSize="10px" onClick={() => handleFetchProgramados(2, ':')} />
+                                    </CInputGroup>
+
+                                    <CInputGroup>
+                                        <ButtonGroups input={'7'} fonteSize="20px" />
+                                        <ButtonGroups input={'8'} fonteSize="20px" />
+                                        <ButtonGroups input={'9'} fonteSize="20px" />
+                                        <ButtonGroups input={'Carnes de Boi'} fonteSize="10px" onClick={() => handleFetchProgramados(3, ';')} />
+                                    </CInputGroup>
+
+                                    <CInputGroup>
+                                        <ButtonGroups input={'Cancela/Pausa'} fonteSize="9px" onClick={handleCancel} />
+                                        <ButtonGroups input={'0'} fonteSize="20px" />
+                                        <ButtonGroups input={'Iniciar/+30'} fonteSize="12px" onClick={handleInitial} />
+                                        <ButtonGroups input={'Frango'} fonteSize="10px" onClick={() => handleFetchProgramados(4, '-')} />
+                                    </CInputGroup>
+
+                                    <CInputGroup>
+                                        <ButtonGroups input={'Custom 1'} fonteSize="10px" fonte={'italic'} onClick={() => handleFetchProgramados(6, '+')} />
+                                        <ButtonGroups input={'Custom 2'} fonteSize="10px" fonte={'italic'} onClick={() => handleFetchProgramados(7, '+')} />
+                                        <ButtonGroups input={'Custom 3'} fonteSize="10px" fonte={'italic'} onClick={() => handleFetchProgramados(8, '+')} />
+                                        <ButtonGroups input={'Feijão'}   fonteSize="10px" onClick={() => handleFetchProgramados(5, '+')} />
+                                    </CInputGroup>
+
+                                    <CInputGroup>
+                                        <CCol md={8}>
+                                            <CFormLabel htmlFor="exampleFormControlTextarea1">Aquecimento</CFormLabel>
+                                            <textarea className="form-control" id="exampleFormControlTextarea1" rows="10" value={outputString} ></textarea>
+                                        </CCol>
                                     </CInputGroup>
                                 </CCol>
-                            </CInputGroup>
-
-                            <CInputGroup>
-                                <ButtonGroups input={'1'} fonteSize="20px" />
-                                <ButtonGroups input={'2'} fonteSize="20px" />
-                                <ButtonGroups input={'3'} fonteSize="20px" />
-                                <ButtonGroups input={'Pipoca'} fonteSize="10px" onClick={() => handleFetchProgramados(1, ',')} />
-                            </CInputGroup>
-
-                            <CInputGroup>
-                                <ButtonGroups input={'4'} fonteSize="20px" />
-                                <ButtonGroups input={'5'} fonteSize="20px" />
-                                <ButtonGroups input={'6'} fonteSize="20px" />
-                                <ButtonGroups input={'Leite'} fonteSize="10px" onClick={() => handleFetchProgramados(2, ':')} />
-                            </CInputGroup>
-
-                            <CInputGroup>
-                                <ButtonGroups input={'7'} fonteSize="20px" />
-                                <ButtonGroups input={'8'} fonteSize="20px" />
-                                <ButtonGroups input={'9'} fonteSize="20px" />
-                                <ButtonGroups input={'Carnes de Boi'} fonteSize="10px" onClick={() => handleFetchProgramados(3, ';')} />
-                            </CInputGroup>
-
-                            <CInputGroup>
-                                <ButtonGroups input={'Cancela/Pausa'} fonteSize="9px" onClick={handleCancel} />
-                                <ButtonGroups input={'0'} fonteSize="20px" />
-                                <ButtonGroups input={'Iniciar/+30'} fonteSize="12px" onClick={handleInitial} />
-                                <ButtonGroups input={'Frango'} fonteSize="10px" onClick={() => handleFetchProgramados(4, '-')} />
-                            </CInputGroup>
-
-                            <CInputGroup>
-                                <ButtonGroups input={'Custom 1'} fonteSize="10px" />
-                                <ButtonGroups input={'Custom 2'} fonteSize="10px" />
-                                <ButtonGroups input={'Custom 3'} fonteSize="10px" />
-                                <ButtonGroups input={'Feijão'} fonteSize="10px" onClick={() => handleFetchProgramados(5, '+')} />
-                            </CInputGroup>
-
-
-                            <CInputGroup>
-                                <CCol md={12}>
-                                    <CFormLabel htmlFor="outputString">Resultado</CFormLabel>
-                                    <CFormInput
-                                        type="text"
-                                        id="outputString"
-                                        value={outputString}
-                                        readOnly
-                                        style={{ width: '100%' }}
-                                    />
-                                </CCol>
-                            </CInputGroup>
+                            </CRow>
                         </CForm>
                     </CCardBody>
                 </CCard>
