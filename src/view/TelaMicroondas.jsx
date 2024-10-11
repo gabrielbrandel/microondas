@@ -15,7 +15,8 @@ import {
 
 import useFetchProgramados from '../components/api/methods/GetProgramados';
 import usePostProgramados from '../components/api/methods/PostProgramados';
-import usePutProgramados from '../components/api/methods/PutProgramados';
+import useDeleteProgramados from '../components/api/methods/DeleteProgramados';
+import { useGesture } from '@use-gesture/react';
 
 export const TelaMicroondas = () => {
     const intervalRef = useRef(null);
@@ -25,25 +26,137 @@ export const TelaMicroondas = () => {
     const [isPaused, setIsPaused] = useState(false);
     const [outputString, setOutputString] = useState('');
     const { fetchProgramados, loading, error } = useFetchProgramados();
-    const { postProgramados, postLoading, posError } = usePostProgramados();
-    const { putProgramados, putLoading, putError } = usePutProgramados();
+    const {postProgramados} = usePostProgramados();
+    const {deleteProgramados } = useDeleteProgramados();
     const [string, setString] = useState('.');
-    const [ getResponse, setResponse ] = useState('');
+    const [getResponse, setResponse] = useState('');
     const [getImage, setImage] = useState("./src/images/micro_off.jpg");
+    const [timer, setTimer] = useState(null);
+    const [isPressed, setIsPressed] = useState(false);
+    const [isPressed2, setIsPressed2] = useState(false);
+    const [isPressed3, setIsPressed3] = useState(false);
+
+    const bind = useGesture({
+        onPointerDown: (state) => {
+            setIsPressed(true);
+            const newTimer = setTimeout(() => {
+
+                const confirmDelete = window.confirm('Tem certeza que deseja limpar essa customização?');
+
+                if (confirmDelete) {
+                    deleteProgramados(6);
+                    cleanSets();
+                }
+                setIsPressed(false);
+                setTimer(null);
+            }, 3000);
+            setTimer(newTimer);
+        },
+        onPointerUp: () => {
+            if (timer) {
+                clearTimeout(timer);
+                setTimer(null);
+            }
+            setIsPressed(false);
+        }
+    });
+
+    const bindButton2 = useGesture({
+        onPointerDown: (state) => {
+            setIsPressed2(true);
+            const newTimer = setTimeout(() => {
+
+                const confirmDelete = window.confirm('Tem certeza que deseja limpar essa customização?');
+
+                if (confirmDelete) {
+                    deleteProgramados(7);
+                    cleanSets();
+                }
+
+                setIsPressed2(false);
+                setTimer(null);
+            }, 3000);
+            setTimer(newTimer);
+        },
+        onPointerUp: () => {
+            if (timer) {
+                clearTimeout(timer);
+                setTimer(null);
+            }
+            setIsPressed2(false);
+        }
+    });
+    const bindButton3 = useGesture({
+        onPointerDown: (state) => {
+            setIsPressed3(true);
+            const newTimer = setTimeout(() => {
+
+                const confirmDelete = window.confirm('Tem certeza que deseja limpar essa customização?');
+
+                if (confirmDelete) {                    
+                    deleteProgramados(8);
+                    cleanSets();
+                }
+
+                setIsPressed3(false);
+                setTimer(null);
+            }, 3000);
+            setTimer(newTimer);
+        },
+        onPointerUp: () => {
+            if (timer) {
+                clearTimeout(timer);
+                setTimer(null);
+            }
+            setIsPressed3(false);
+        }
+    });
 
     const handleFetchProgramados = async (id, string) => {
 
         const response = await fetchProgramados(id);
 
-        if (response) {     
+        // console.log('teste:', response);
+        if (typeof response !== 'undefined' && response !== null) {
             setResponse(JSON.stringify(response, null, 2));
-            setOutputString('');       
+            setOutputString('');
             setString(string);
             setPw(response.potencia);
-            setInput(convertToTimeFormat(response.tempo));            
-        } else {
-            alert('Programa não cadastrado.');
+            setInput(convertToTimeFormat(response.tempo));
+        } else {            
+            const values = {
+                id: id, 
+                nome: "Custom",
+                alimento: "Custom",
+                tempo: `${convertToMinutes(getInput)} minuto${convertToMinutes(getInput) !== 1 ? 's' : ''}` , 
+                potencia: getPw, 
+                instrucao: "Aquecimento personalizado."
+            };
+            
+            if (convertToMinutes(getInput) > 0) {
+                try {
+                    const postResponse = await postProgramados(values); 
+                    console.log('Resposta do post:', postResponse);
+
+                    if (postResponse) {
+                        setpostResponse(JSON.stringify(postResponse, null, 2));
+                        setOutputString('');
+                        setString(string);
+                        setPw(postResponse.potencia);
+                        setInput(convertToTimeFormat(postResponse.tempo));
+                    }
+                } catch (error) {
+                    console.error('Erro ao postar dados:', error);
+                }
+            } else {
+                alert('O tempo configurado deve ser maior ou igual a 1 minuto.');
+            }
         }
+    };
+
+    const convertToMinutes = (timeString) => {
+        const [minutes] = timeString.split(':').map(Number); 
+        return `${minutes}`; 
     };
 
     const convertSecondsToTime = (totalSeconds) => {
@@ -119,21 +232,20 @@ export const TelaMicroondas = () => {
             setImage("./src/images/micro_off.jpg");
         } else if (isPaused) {
             setIsPaused(false);
-            setString('.');
-            setInput('00:00');
-            setOutputString('');
-            setImage("./src/images/micro_off.jpg");
-            setResponse('');
-            
+            cleanSets();
+
         } else if (!isRunning && !isPaused) {
-            setString('.');
-            setOutputString('');
-            setInput('00:00');
-            setImage("./src/images/micro_off.jpg");
-            setResponse('');
-            
+            cleanSets();
         }
     };
+
+    const cleanSets = () => {
+        setString('.');
+        setOutputString('');
+        setInput('00:00');
+        setResponse('');
+        setImage("./src/images/micro_off.jpg");
+    }
 
     const handleClick = (input) => {
         setInput((prev) => {
@@ -317,7 +429,7 @@ export const TelaMicroondas = () => {
                                             </CInputGroup>
                                         </CCol>
                                     </CInputGroup>
-                                    <CImage rounded thumbnail src={getImage} style={{ width: '600px', height: '270px', marginTop: '10px' }} />
+                                    <CImage rounded thumbnail src={getImage} style={{ width: '600px', height: '290px', marginTop: '10px' }} />
                                     <CFormLabel htmlFor="exampleFormControlTextarea1">JSON</CFormLabel>
                                     <textarea
                                         className="form-control"
@@ -325,9 +437,9 @@ export const TelaMicroondas = () => {
                                         rows="10"
                                         value={getResponse}
                                         readOnly
-                                    ></textarea>                                
+                                    ></textarea>
                                 </CCol>
-                                <CCol xs={12} md={6} className="d-flex flex-column align-items-end" style={{marginTop: '80px'}}>
+                                <CCol xs={12} md={6} className="d-flex flex-column align-items-end" style={{ marginTop: '80px' }}>
                                     <CInputGroup>
                                         <ButtonGroups input={'1'} fonteSize="20px" />
                                         <ButtonGroups input={'2'} fonteSize="20px" />
@@ -357,10 +469,157 @@ export const TelaMicroondas = () => {
                                     </CInputGroup>
 
                                     <CInputGroup>
-                                        <ButtonGroups input={'Custom 1'} fonteSize="10px" fonte={'italic'} onClick={() => handleFetchProgramados(6, '+')} />
-                                        <ButtonGroups input={'Custom 2'} fonteSize="10px" fonte={'italic'} onClick={() => handleFetchProgramados(7, '+')} />
-                                        <ButtonGroups input={'Custom 3'} fonteSize="10px" fonte={'italic'} onClick={() => handleFetchProgramados(8, '+')} />
-                                        <ButtonGroups input={'Feijão'}   fonteSize="10px" onClick={() => handleFetchProgramados(5, '+')} />
+                                        <CRow>
+                                            <CCol md={1}>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <CButton
+                                                        {...bind()}
+                                                        type="button"
+                                                        color="secondary"
+                                                        variant="ghost"
+                                                        id="inputGroupFileAddon03"
+                                                        onContextMenu={(e) => e.preventDefault()}
+                                                        onClick={() => handleFetchProgramados(6, '$')}
+                                                        style={{
+                                                            height: '50px',
+                                                            width: '65px',
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center',
+                                                            backgroundColor: isPressed ? 'darkred' : '#6c7484',
+                                                            border: 'none',
+                                                            color: 'white',
+                                                            padding: 0,
+                                                            marginTop: '5px',
+                                                            fontSize: '10px',
+                                                            fontStyle: 'italic',
+                                                            // transition: 'transform 0.2s ease, background-color 0.3s ease',
+                                                            transform: isPressed ? 'scale(0.95)' : 'scale(1)',
+                                                            transition: 'transform 0.1s ease',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.backgroundColor = '#5a6268';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.backgroundColor = '#6c7484';
+                                                        }}
+                                                        onMouseDown={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(0.9)';
+                                                        }}
+                                                        onMouseUp={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(1)';
+                                                        }}
+                                                    >
+                                                        {'Custom 1'}
+                                                    </CButton>
+                                                    <span style={{ fontSize: '8px', color: 'black', display: 'block', marginTop: '3px', whiteSpace: 'nowrap' }}>
+                                                        Press 3s p/ limpar
+                                                    </span>
+                                                </div>
+                                            </CCol>
+                                        </CRow>
+                                        <CRow>
+                                            <CCol md={1}>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <CButton
+                                                        {...bindButton2()}
+                                                        type="button"
+                                                        color="secondary"
+                                                        variant="ghost"
+                                                        id="inputGroupFileAddon03"
+                                                        onContextMenu={(e) => e.preventDefault()}
+                                                        onClick={() => handleFetchProgramados(7, '@')}
+                                                        style={{
+                                                            height: '50px',
+                                                            width: '65px',
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center',
+                                                            backgroundColor: isPressed2 ? 'darkred' : '#6c7484',
+                                                            border: 'none',
+                                                            color: 'white',
+                                                            padding: 0,
+                                                            marginTop: '5px',
+                                                            fontSize: '10px',
+                                                            fontStyle: 'italic',
+                                                            // transition: 'transform 0.2s ease, background-color 0.3s ease',
+                                                            transform: isPressed2 ? 'scale(0.95)' : 'scale(1)',
+                                                            transition: 'transform 0.1s ease',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.backgroundColor = '#5a6268';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.backgroundColor = '#6c7484';
+                                                        }}
+                                                        onMouseDown={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(0.9)';
+                                                        }}
+                                                        onMouseUp={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(1)';
+                                                        }}
+                                                    >
+                                                        {'Custom 2'}
+                                                    </CButton>
+                                                    <span style={{ fontSize: '8px', color: 'black', display: 'block', marginTop: '3px', whiteSpace: 'nowrap' }}>
+                                                        Press 3s p/ limpar
+                                                    </span>
+                                                </div>
+                                            </CCol>
+                                        </CRow>
+                                        <CRow>
+                                            <CCol md={1}>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <CButton
+                                                        {...bindButton3()}
+                                                        type="button"
+                                                        color="secondary"
+                                                        variant="ghost"
+                                                        id="inputGroupFileAddon03"
+                                                        onContextMenu={(e) => e.preventDefault()}
+                                                        onClick={() => handleFetchProgramados(8, '!')}
+                                                        style={{
+                                                            height: '50px',
+                                                            width: '65px',
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center',
+                                                            backgroundColor: isPressed3 ? 'darkred' : '#6c7484',
+                                                            border: 'none',
+                                                            color: 'white',
+                                                            padding: 0,
+                                                            marginTop: '5px',
+                                                            fontSize: '10px',
+                                                            fontStyle: 'italic',
+                                                            // transition: 'transform 0.2s ease, background-color 0.3s ease',
+                                                            transform: isPressed3 ? 'scale(0.95)' : 'scale(1)',
+                                                            transition: 'transform 0.1s ease',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.backgroundColor = '#5a6268';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.backgroundColor = '#6c7484';
+                                                        }}
+                                                        onMouseDown={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(0.9)';
+                                                        }}
+                                                        onMouseUp={(e) => {
+                                                            e.currentTarget.style.transform = 'scale(1)';
+                                                        }}
+                                                    >
+                                                        {'Custom 3'}
+                                                    </CButton>
+                                                    <span style={{ fontSize: '8px', color: 'black', display: 'block', marginTop: '3px', whiteSpace: 'nowrap' }}>
+                                                        Press 3s p/ limpar
+                                                    </span>
+                                                </div>
+                                            </CCol>
+                                        </CRow>
+                                        {/* <ButtonGroups input={'Custom 1'} fonteSize="10px" fonte={'italic'} onClick={() => handleFetchProgramados(6, '+')} /> */}
+                                        {/* <ButtonGroups input={'Custom 2'} fonteSize="10px" fonte={'italic'} onClick={() => handleFetchProgramados(7, '+')} /> */}
+                                        {/* <ButtonGroups input={'Custom 3'} fonteSize="10px" fonte={'italic'} onClick={() => handleFetchProgramados(8, '+')} /> */}
+                                        <ButtonGroups input={'Feijão'} fonteSize="10px" onClick={() => handleFetchProgramados(5, '+')} />
                                     </CInputGroup>
 
                                     <CInputGroup>

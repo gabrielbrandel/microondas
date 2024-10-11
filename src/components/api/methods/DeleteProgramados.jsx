@@ -1,18 +1,14 @@
 import { useState } from 'react';
 import axiosInstance from '../AxiosInstance';
 
-const usePostProgramados = () => {
-    const [rows, setRows] = useState([]);
+const useDeleteProgramados = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    
-    const postProgramados = async (values) => {
+
+    const deleteProgramados = async (id) => {
         setLoading(true);
-        console.log( 'teste:', values );
         try {
-            const response = await axiosInstance.post('programados', values);
-            setRows(response.data); 
-            return response.data;   
+            await axiosInstance.delete(`programados/${id}`);
         } catch (error) {
             console.error('Erro ao comunicar com a API:', error);
             setError(error);
@@ -21,7 +17,7 @@ const usePostProgramados = () => {
         }
     };
 
-    return { rows, loading, error, postProgramados };
+    return { loading, error, deleteProgramados };
 };
 
-export default usePostProgramados;
+export default useDeleteProgramados;
